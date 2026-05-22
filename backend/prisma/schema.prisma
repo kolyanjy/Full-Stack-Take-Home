@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Site {
+  id                      String   @id @default(uuid())
+  name                    String
+  location                String
+  emission_limit          Float
+  total_emissions_to_date Float    @default(0)
+  metadata                Json?
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+
+  measurements  Measurement[]
+  ingestBatches IngestBatch[]
+
+  @@map("sites")
+}
+
+model IngestBatch {
+  id           String   @id
+  site_id      String
+  total_value  Float
+  count        Int
+  processed_at DateTime @default(now())
+
+  site         Site          @relation(fields: [site_id], references: [id])
+  measurements Measurement[]
+
+  @@map("ingest_batches")
+}
+
+model Measurement {
+  id         String   @id @default(uuid())
+  site_id    String
+  batch_id   String
+  value      Float
+  unit       String   @default("kg")
+  sensor_id  String?
+  timestamp  DateTime
+  created_at DateTime @default(now())
+
+  site  Site        @relation(fields: [site_id], references: [id])
+  batch IngestBatch @relation(fields: [batch_id], references: [id])
+
+  @@index([site_id])
+  @@index([site_id, timestamp])
+  @@map("measurements")
+}
+
+model OutboxEvent {
+  id           String    @id @default(uuid())
+  event_type   String
+  payload      Json
+  processed    Boolean   @default(false)
+  processed_at DateTime?
+  attempts     Int       @default(0)
+  last_error   String?
+  created_at   DateTime  @default(now())
+
+  @@index([processed, created_at])
+  @@map("outbox_events")
+}
