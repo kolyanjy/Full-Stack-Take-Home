@@ -1,0 +1,23 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { PrismaModule } from './prisma/prisma.module';
+import { SitesModule } from './sites/sites.module';
+import { IngestModule } from './ingest/ingest.module';
+import { MetricsModule } from './metrics/metrics.module';
+import { OutboxModule } from './outbox/outbox.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 300 }]),
+    PrismaModule,
+    SitesModule,
+    IngestModule,
+    MetricsModule,
+    OutboxModule,
+  ],
+})
+export class AppModule {}
