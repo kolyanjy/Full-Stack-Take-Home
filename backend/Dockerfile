@@ -13,6 +13,9 @@ RUN npm install
 # Copy the rest of the source code
 COPY . .
 
+# Generate Prisma client types before compiling TypeScript
+RUN npx prisma generate
+
 # Build the application
 RUN npm run build
 
@@ -28,9 +31,11 @@ ENV NODE_ENV=production
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./
 
 # Expose the application port (NestJS defaults to 3000)
 EXPOSE 3000
 
 # Start the application
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main"]
