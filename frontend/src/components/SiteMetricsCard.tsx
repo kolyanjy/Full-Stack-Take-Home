@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AlertTriangle, CheckCircle, Loader2, RefreshCw } from 'lucide-react';
 import { api } from '@/services/api';
 import type { Site, SiteMetrics } from '@/types/emissions';
@@ -12,14 +12,18 @@ export function SiteMetricsCard({ site, refreshTrigger }: Props) {
   const [metrics, setMetrics] = useState<SiteMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const initialLoad = useRef(true);
 
   useEffect(() => {
     const fetchMetrics = async () => {
-      setLoading(true);
-      setError(null);
+      if (initialLoad.current) setLoading(true);
       const result = await api.getSiteMetrics(site.id);
       if (result.success) {
-        setMetrics(result.data);
+        setMetrics(prev =>
+          JSON.stringify(prev) === JSON.stringify(result.data) ? prev : result.data,
+        );
+        setError(null);
+        initialLoad.current = false;
       } else {
         setError(result.error.message);
       }

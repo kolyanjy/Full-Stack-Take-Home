@@ -20,7 +20,9 @@ export default function App() {
     setLoading(true);
     const result = await api.listSites();
     if (result.success) {
-      setSites(result.data);
+      setSites(prev =>
+        JSON.stringify(prev) === JSON.stringify(result.data) ? prev : result.data,
+      );
     }
     setLoading(false);
   };
@@ -28,6 +30,13 @@ export default function App() {
   useEffect(() => {
     loadSites();
   }, [refreshTrigger]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshTrigger((prev) => prev + 1);
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSiteCreated = (site: Site) => {
     setSites((prev) => [site, ...prev]);
