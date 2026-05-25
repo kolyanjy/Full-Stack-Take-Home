@@ -2,10 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { MetricsService } from './metrics.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../redis/redis.service';
 
 const mockPrisma = {
   site: { findUnique: jest.fn() },
   measurement: { findFirst: jest.fn() },
+};
+
+const mockRedis = {
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn().mockResolvedValue(undefined),
+  del: jest.fn().mockResolvedValue(undefined),
 };
 
 const buildSite = (overrides: Record<string, unknown> = {}) => ({
@@ -22,7 +29,11 @@ describe('MetricsService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MetricsService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        MetricsService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: RedisService, useValue: mockRedis },
+      ],
     }).compile();
 
     service = module.get<MetricsService>(MetricsService);
