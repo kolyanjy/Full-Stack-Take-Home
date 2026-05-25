@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { AlertCircle, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { api } from '@/services/api';
 import type { Site } from '@/types/emissions';
@@ -70,7 +71,7 @@ export function IngestBatchForm({ sites, onIngestionComplete }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await performIngestion(crypto.randomUUID());
+    await performIngestion(uuidv4());
   };
 
   const handleRetry = async () => {

@@ -8,10 +8,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
+    const sslEnabled = process.env.DATABASE_SSL !== 'false';
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL!,
       // AWS RDS uses its own CA; disable cert verification within the private VPC
-      ssl: { rejectUnauthorized: false },
+      ...(sslEnabled ? { ssl: { rejectUnauthorized: false } } : {}),
     });
     const adapter = new PrismaPg(pool);
     super({ adapter });
