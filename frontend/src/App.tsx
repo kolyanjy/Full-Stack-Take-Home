@@ -4,9 +4,6 @@ import {
   Database,
   Loader2,
   RefreshCw,
-  Shield,
-  Zap,
-  GitBranch,
 } from 'lucide-react';
 import { api } from '@/services/api';
 import type { Site } from '@/types/emissions';
@@ -54,9 +51,6 @@ export default function App() {
                 <h1 className="text-lg font-semibold text-gray-900">
                   Emissions Monitoring Dashboard
                 </h1>
-                <p className="text-xs text-gray-500">
-                  Real-time methane tracking · Idempotent ingestion · OGMP 2.0
-                </p>
               </div>
             </div>
 
@@ -120,46 +114,6 @@ export default function App() {
               ))}
             </div>
           )}
-        </section>
-
-        {/* Architecture callout */}
-        <section className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-6">
-          <h3 className="font-semibold text-blue-900 mb-4 text-sm">
-            Architecture Highlights
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex gap-3">
-              <Shield className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-blue-900">Idempotency</p>
-                <p className="text-xs text-blue-700 mt-0.5 leading-relaxed">
-                  Each request carries a unique{' '}
-                  <code className="font-mono bg-blue-100 px-0.5 rounded">request_id</code>.
-                  Retries are safe — the backend deduplicates at the database level.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Zap className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-blue-900">Atomic Transactions</p>
-                <p className="text-xs text-blue-700 mt-0.5 leading-relaxed">
-                  Measurements and site totals update in a single Postgres transaction.
-                  No partial writes, no double-counting.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <GitBranch className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-blue-900">Command Pattern</p>
-                <p className="text-xs text-blue-700 mt-0.5 leading-relaxed">
-                  NestJS backend uses Command/Processor + Transactional Outbox for
-                  scalable, event-driven processing with guaranteed delivery.
-                </p>
-              </div>
-            </div>
-          </div>
         </section>
       </main>
     </div>

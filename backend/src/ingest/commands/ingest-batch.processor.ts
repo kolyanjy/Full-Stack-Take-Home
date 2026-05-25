@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../../redis/redis.service';
 import { IngestBatchCommand } from './ingest-batch.command';
 import { IngestResponse } from '../../../shared/schemas/ingest.schema';
 
@@ -9,7 +10,10 @@ export class IngestBatchProcessor {
   private readonly logger = new Logger(IngestBatchProcessor.name);
   private duplicatesRejected = 0;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   async execute(command: IngestBatchCommand): Promise<IngestResponse> {
     const existingBatch = await this.prisma.ingestBatch.findUnique({
@@ -99,6 +103,8 @@ export class IngestBatchProcessor {
       `Batch processed: request_id=${command.requestId} site_id=${command.siteId} ` +
         `count=${command.readings.length} total_value=${totalValue}`,
     );
+
+    await this.redis.del(`metrics:${command.siteId}`, `sites:${command.siteId}`, 'sites:all');
 
     return {
       batch_id: result.id,

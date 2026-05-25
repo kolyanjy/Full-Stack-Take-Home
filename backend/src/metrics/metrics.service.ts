@@ -1,12 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../redis/redis.service';
 import { SiteMetrics } from '../../shared/schemas/metrics.schema';
+
+const TTL = 30;
 
 @Injectable()
 export class MetricsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   async getSiteMetrics(siteId: string): Promise<SiteMetrics> {
+    const cached = await this.redis.get<SiteMetrics>(`metrics:${siteId}`);
+    if (cached) return cached;
+
     const site = await this.prisma.site.findUnique({
       where: { id: siteId },
       include: { _count: { select: { measurements: true } } },
@@ -24,7 +33,7 @@ export class MetricsService {
 
     const utilization = (site.total_emissions_to_date / site.emission_limit) * 100;
 
-    return {
+    const metrics: SiteMetrics = {
       site_id: site.id,
       site_name: site.name,
       emission_limit: site.emission_limit,
@@ -35,5 +44,12 @@ export class MetricsService {
       measurement_count: site._count.measurements,
       last_reading_at: lastMeasurement?.timestamp ?? null,
     };
+
+    await this.redis.set(`metrics:${siteId}`, metrics, TTL);
+    return metrics;
+  }
+
+  async invalidate(siteId: string) {
+    await this.redis.del(`metrics:${siteId}`);
   }
 }
