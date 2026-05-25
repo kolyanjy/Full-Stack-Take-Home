@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { IngestBatchProcessor } from './ingest-batch.processor';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../../redis/redis.service';
 import { IngestBatchCommand } from './ingest-batch.command';
 
 const makeReading = (value = 100) => ({
@@ -12,6 +13,10 @@ const makeReading = (value = 100) => ({
 });
 
 const siteFindResult = [{ id: 'site-uuid' }];
+
+const makeMockRedis = () => ({
+  del: jest.fn().mockResolvedValue(undefined),
+});
 
 const makeMockPrisma = () => ({
   ingestBatch: {
@@ -35,14 +40,17 @@ const makeMockPrisma = () => ({
 describe('IngestBatchProcessor', () => {
   let processor: IngestBatchProcessor;
   let mockPrisma: ReturnType<typeof makeMockPrisma>;
+  let mockRedis: ReturnType<typeof makeMockRedis>;
 
   beforeEach(async () => {
     mockPrisma = makeMockPrisma();
+    mockRedis = makeMockRedis();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         IngestBatchProcessor,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: RedisService, useValue: mockRedis },
       ],
     }).compile();
 

@@ -3,6 +3,7 @@ import { INestApplication, VersioningType } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { RedisService } from '../src/redis/redis.service';
 import { AllExceptionsFilter } from '../src/common/filters/all-exceptions.filter';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 
@@ -24,6 +25,12 @@ const mockPrisma = {
   $disconnect: jest.fn(),
 };
 
+const mockRedis = {
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn().mockResolvedValue(undefined),
+  del: jest.fn().mockResolvedValue(undefined),
+};
+
 describe('Metrics (e2e)', () => {
   let app: INestApplication;
 
@@ -33,6 +40,8 @@ describe('Metrics (e2e)', () => {
     })
       .overrideProvider(PrismaService)
       .useValue(mockPrisma)
+      .overrideProvider(RedisService)
+      .useValue(mockRedis)
       .compile();
 
     app = moduleFixture.createNestApplication();

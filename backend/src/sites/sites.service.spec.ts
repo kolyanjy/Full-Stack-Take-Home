@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { SitesService } from './sites.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../redis/redis.service';
 
 const mockPrisma = {
   site: {
@@ -11,12 +12,22 @@ const mockPrisma = {
   },
 };
 
+const mockRedis = {
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn().mockResolvedValue(undefined),
+  del: jest.fn().mockResolvedValue(undefined),
+};
+
 describe('SitesService', () => {
   let service: SitesService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [SitesService, { provide: PrismaService, useValue: mockPrisma }],
+      providers: [
+        SitesService,
+        { provide: PrismaService, useValue: mockPrisma },
+        { provide: RedisService, useValue: mockRedis },
+      ],
     }).compile();
 
     service = module.get<SitesService>(SitesService);
