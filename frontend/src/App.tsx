@@ -29,6 +29,13 @@ export default function App() {
     loadSites();
   }, [refreshTrigger]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshTrigger((prev) => prev + 1);
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleSiteCreated = (site: Site) => {
     setSites((prev) => [site, ...prev]);
   };
