@@ -1,5 +1,21 @@
 # 🌍 Highwood Engineering Challenge: Emissions Data Platform
 
+## Local Setup
+1. Copy the backend environment file:
+   ```bash
+   cp backend/.env.example backend/.env
+   ```
+2. Start the app and infrastructure:
+   ```bash
+   docker compose up -d
+   ```
+3. Seed the database after the backend container is running:
+   ```bash
+   docker exec -it <backend-container-id> npx prisma db seed
+   ```
+
+> Frontend: `http://localhost:3000`
+
 ## **The Context**
 Highwood Emissions Management is on a mission to provide industrial emissions transparency. Our platform processes vast streams of methane data from sensors, satellites, and field engineers. In our world, **data integrity is non-negotiable**. A lost packet or a double-counted emission can lead to inaccurate regulatory reporting (OGMP 2.0) and multi-million dollar implications for our clients.
 
