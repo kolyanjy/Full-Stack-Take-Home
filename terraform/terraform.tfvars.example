@@ -1,0 +1,4 @@
+aws_region  = "us-east-1"
+domain_name = "emissions-dashboard.click"
+db_password = "change-me-use-a-strong-password"
+

@@ -178,15 +178,6 @@ export function IngestBatchForm({ sites, onIngestionComplete }: Props) {
           {loading ? 'Ingesting...' : 'Ingest Batch'}
         </button>
       </form>
-
-      <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
-        <p className="text-xs text-blue-800 leading-relaxed">
-          <strong>Idempotency demo:</strong> Each submission generates a unique{' '}
-          <code className="font-mono bg-blue-100 px-1 rounded">request_id</code>. If
-          ingestion fails, the Retry button reuses the same key — no duplicate records
-          even on network retries.
-        </p>
-      </div>
     </div>
   );
 }

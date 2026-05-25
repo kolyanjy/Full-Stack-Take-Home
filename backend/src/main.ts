@@ -16,7 +16,13 @@ async function bootstrap() {
 
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
-  app.enableCors({ origin: process.env.CORS_ORIGIN || '*' });
+  const rawOrigin = process.env.CORS_ORIGIN;
+  const corsOrigin = rawOrigin
+    ? rawOrigin.includes(',')
+      ? rawOrigin.split(',').map((o) => o.trim())
+      : rawOrigin
+    : '*';
+  app.enableCors({ origin: corsOrigin });
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

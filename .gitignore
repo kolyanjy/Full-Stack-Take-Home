@@ -1,2 +1,9 @@
 .claude
 .DS_Store
+
+# Terraform
+terraform/*.tfvars
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
