@@ -1,7 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { IngestBatch, Prisma } from '@prisma/client';
+import { IngestBatch } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RedisService } from '../../redis/redis.service';
 import { IngestBatchCommand } from './ingest-batch.command';
 import { IngestResponse } from '../../../shared/schemas/ingest.schema';
 
@@ -10,10 +9,7 @@ export class IngestBatchProcessor {
   private readonly logger = new Logger(IngestBatchProcessor.name);
   private duplicatesRejected = 0;
 
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly redis: RedisService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async execute(command: IngestBatchCommand): Promise<IngestResponse> {
     const existingBatch = await this.prisma.ingestBatch.findUnique({
@@ -29,37 +25,14 @@ export class IngestBatchProcessor {
       return this.toResponse(existingBatch, true);
     }
 
-    const totalValue = command.readings.reduce((sum, r) => sum + r.value, 0);
-
-    const result = await this.prisma.$transaction(
-      (tx) => this.createBatchInTransaction(tx, command, totalValue),
-      { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 10000 },
-    );
-
-    this.logger.log(
-      `Batch processed: request_id=${command.requestId} site_id=${command.siteId} ` +
-        `count=${command.readings.length} total_value=${totalValue}`,
-    );
-
-    await this.invalidateSiteCache(command.siteId);
-
-    return this.toResponse(result, false);
-  }
-
-  private async createBatchInTransaction(
-    tx: Prisma.TransactionClient,
-    command: IngestBatchCommand,
-    totalValue: number,
-  ): Promise<IngestBatch> {
-    const sites = await tx.$queryRaw<{ id: string }[]>(
-      Prisma.sql`SELECT id FROM sites WHERE id = ${command.siteId} FOR UPDATE`,
-    );
-
-    if (sites.length === 0) {
+    const site = await this.prisma.site.findUnique({ where: { id: command.siteId } });
+    if (!site) {
       throw new NotFoundException({ code: 'NOT_FOUND', message: `Site ${command.siteId} not found` });
     }
 
-    const batch = await tx.ingestBatch.create({
+    const totalValue = command.readings.reduce((sum, r) => sum + r.value, 0);
+
+    const batch = await this.prisma.ingestBatch.create({
       data: {
         id: command.requestId,
         site_id: command.siteId,
@@ -68,46 +41,12 @@ export class IngestBatchProcessor {
       },
     });
 
-    await tx.measurement.createMany({
-      data: command.readings.map((r) => ({
-        site_id: command.siteId,
-        batch_id: batch.id,
-        value: r.value,
-        unit: r.unit,
-        sensor_id: r.sensor_id ?? null,
-        timestamp: new Date(r.timestamp),
-      })),
-    });
+    this.logger.log(
+      `Batch accepted: request_id=${command.requestId} site_id=${command.siteId} ` +
+        `count=${command.readings.length} total_value=${totalValue}`,
+    );
 
-    await tx.site.update({
-      where: { id: command.siteId },
-      data: { total_emissions_to_date: { increment: totalValue } },
-    });
-
-    const updatedSite = await tx.site.findUnique({ where: { id: command.siteId } });
-
-    await tx.outboxEvent.create({
-      data: {
-        event_type: 'EMISSIONS_INGESTED',
-        payload: {
-          batch_id: batch.id,
-          site_id: command.siteId,
-          total_value: totalValue,
-          count: command.readings.length,
-          new_total: updatedSite?.total_emissions_to_date,
-          emission_limit: updatedSite?.emission_limit,
-          limit_exceeded:
-            (updatedSite?.total_emissions_to_date?.toNumber() ?? 0) >
-            (updatedSite?.emission_limit?.toNumber() ?? 0),
-        },
-      },
-    });
-
-    return batch;
-  }
-
-  private async invalidateSiteCache(siteId: string): Promise<void> {
-    await this.redis.del(`metrics:${siteId}`, `sites:${siteId}`, 'sites:all');
+    return this.toResponse(batch, false);
   }
 
   private toResponse(batch: IngestBatch, duplicate: boolean): IngestResponse {
