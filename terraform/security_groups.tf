@@ -114,3 +114,25 @@ resource "aws_security_group" "redis" {
 
   tags = { Name = "${var.app_name}-redis-sg" }
 }
+
+resource "aws_security_group" "msk" {
+  name        = "${var.app_name}-msk-sg"
+  description = "MSK Kafka - accept connections only from backend tasks"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    from_port       = 9092
+    to_port         = 9092
+    protocol        = "tcp"
+    security_groups = [aws_security_group.backend.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { Name = "${var.app_name}-msk-sg" }
+}

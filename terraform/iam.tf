@@ -33,6 +33,8 @@ resource "aws_iam_role_policy" "secrets_access" {
       Resource = [
         aws_secretsmanager_secret.database_url.arn,
         aws_secretsmanager_secret.cors_origin.arn,
+        aws_secretsmanager_secret.redis_url.arn,
+        aws_secretsmanager_secret.kafka_broker.arn,
       ]
     }]
   })

@@ -9,8 +9,6 @@ import { RedisModule } from './redis/redis.module';
 import { SitesModule } from './sites/sites.module';
 import { IngestModule } from './ingest/ingest.module';
 import { MetricsModule } from './metrics/metrics.module';
-import { OutboxModule } from './outbox/outbox.module';
-
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -21,7 +19,6 @@ import { OutboxModule } from './outbox/outbox.module';
     SitesModule,
     IngestModule,
     MetricsModule,
-    OutboxModule,
   ],
   controllers: [AppController],
   providers: [AppService],

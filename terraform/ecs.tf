@@ -38,9 +38,10 @@ resource "aws_ecs_task_definition" "backend" {
     ]
 
     secrets = [
-      { name = "DATABASE_URL", valueFrom = aws_secretsmanager_secret.database_url.arn },
-      { name = "CORS_ORIGIN",  valueFrom = aws_secretsmanager_secret.cors_origin.arn },
-      { name = "REDIS_URL",    valueFrom = aws_secretsmanager_secret.redis_url.arn }
+      { name = "DATABASE_URL",  valueFrom = aws_secretsmanager_secret.database_url.arn },
+      { name = "CORS_ORIGIN",   valueFrom = aws_secretsmanager_secret.cors_origin.arn },
+      { name = "REDIS_URL",     valueFrom = aws_secretsmanager_secret.redis_url.arn },
+      { name = "KAFKA_BROKER",  valueFrom = aws_secretsmanager_secret.kafka_broker.arn }
     ]
 
     logConfiguration = {

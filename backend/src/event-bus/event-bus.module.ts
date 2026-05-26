@@ -15,7 +15,7 @@ import { ReadingsService } from './readings/readings.service';
           options: {
             client: {
               clientId: 'emissions-producer',
-              brokers: [(process.env.KAFKA_BROKER ?? 'localhost:9092')],
+              brokers: (process.env.KAFKA_BROKER ?? 'localhost:9092').split(','),
             },
             producer: {
               allowAutoTopicCreation: true,

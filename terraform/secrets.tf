@@ -27,3 +27,13 @@ resource "aws_secretsmanager_secret_version" "cors_origin" {
   secret_id     = aws_secretsmanager_secret.cors_origin.id
   secret_string = "http://${aws_lb.main.dns_name}"
 }
+
+resource "aws_secretsmanager_secret" "kafka_broker" {
+  name                    = "${var.app_name}/kafka_broker"
+  recovery_window_in_days = 0
+}
+
+resource "aws_secretsmanager_secret_version" "kafka_broker" {
+  secret_id     = aws_secretsmanager_secret.kafka_broker.id
+  secret_string = aws_msk_cluster.main.bootstrap_brokers
+}

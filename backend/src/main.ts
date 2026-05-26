@@ -15,7 +15,12 @@ async function bootstrap() {
     options: {
       client: {
         clientId: 'emissions-consumer',
-        brokers: [(process.env.KAFKA_BROKER ?? 'localhost:9092')],
+        brokers: (process.env.KAFKA_BROKER ?? 'localhost:9092').split(','),
+        retry: {
+          retries: 5,
+          initialRetryTime: 300,
+          factor: 2,
+        },
       },
       consumer: {
         groupId: 'emissions-consumer-group',
