@@ -1,54 +1,56 @@
-import { useState, useEffect } from 'react';
-import {
-  Activity,
-  Database,
-  Loader2,
-  RefreshCw,
-} from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Activity, Database, Loader2, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { api } from '@/services/api';
-import type { Site } from '@/types/emissions';
+import type { Site, SiteMetrics } from '@/types/emissions';
 import { CreateSiteForm } from '@/components/CreateSiteForm';
 import { IngestBatchForm } from '@/components/IngestBatchForm';
 import { SiteMetricsCard } from '@/components/SiteMetricsCard';
+import { useMetricsSocket } from '@/hooks/useMetricsSocket';
 
 export default function App() {
   const [sites, setSites] = useState<Site[]>([]);
+  const [metricsMap, setMetricsMap] = useState<Record<string, SiteMetrics>>({});
   const [loading, setLoading] = useState(true);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const loadSites = async () => {
+  const handleMetricsUpdate = useCallback((metrics: SiteMetrics) => {
+    setMetricsMap(prev => ({ ...prev, [metrics.site_id]: metrics }));
+  }, []);
+
+  const { connected } = useMetricsSocket(handleMetricsUpdate);
+
+  const loadSites = useCallback(async () => {
     setLoading(true);
     const result = await api.listSites();
     if (result.success) {
+      const incoming = result.data;
       setSites(prev =>
-        JSON.stringify(prev) === JSON.stringify(result.data) ? prev : result.data,
+        JSON.stringify(prev) === JSON.stringify(incoming) ? prev : incoming,
+      );
+      await Promise.all(
+        incoming.map(async (site) => {
+          const m = await api.getSiteMetrics(site.id);
+          if (m.success) {
+            setMetricsMap(prev => ({ ...prev, [site.id]: m.data }));
+          }
+        }),
       );
     }
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     loadSites();
-  }, [refreshTrigger]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRefreshTrigger((prev) => prev + 1);
-    }, 10_000);
-    return () => clearInterval(interval);
-  }, []);
+  }, [loadSites]);
 
   const handleSiteCreated = (site: Site) => {
-    setSites((prev) => [site, ...prev]);
-  };
-
-  const handleIngestionComplete = () => {
-    setRefreshTrigger((prev) => prev + 1);
+    setSites(prev => [site, ...prev]);
+    api.getSiteMetrics(site.id).then(m => {
+      if (m.success) setMetricsMap(prev => ({ ...prev, [site.id]: m.data }));
+    });
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -56,37 +58,47 @@ export default function App() {
               <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
                 <Activity className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <h1 className="text-lg font-semibold text-gray-900">
-                  Emissions Monitoring Dashboard
-                </h1>
-              </div>
+              <h1 className="text-lg font-semibold text-gray-900">
+                Emissions Monitoring Dashboard
+              </h1>
             </div>
 
-            <button
-              onClick={() => setRefreshTrigger((prev) => prev + 1)}
-              disabled={loading}
-              className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-all"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
+            <div className="flex items-center gap-3">
+              <div
+                className={`flex items-center gap-1.5 text-xs font-medium ${
+                  connected ? 'text-green-600' : 'text-gray-400'
+                }`}
+              >
+                {connected ? (
+                  <Wifi className="w-3.5 h-3.5" />
+                ) : (
+                  <WifiOff className="w-3.5 h-3.5" />
+                )}
+                {connected ? 'Live' : 'Disconnected'}
+              </div>
+              <button
+                onClick={loadSites}
+                disabled={loading}
+                className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-all"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-        {/* Forms row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
             <CreateSiteForm onSiteCreated={handleSiteCreated} />
           </div>
           <div className="lg:col-span-2">
-            <IngestBatchForm sites={sites} onIngestionComplete={handleIngestionComplete} />
+            <IngestBatchForm sites={sites} onIngestionComplete={loadSites} />
           </div>
         </div>
 
-        {/* Sites grid */}
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
@@ -118,7 +130,7 @@ export default function App() {
                 <SiteMetricsCard
                   key={site.id}
                   site={site}
-                  refreshTrigger={refreshTrigger}
+                  metrics={metricsMap[site.id]}
                 />
               ))}
             </div>

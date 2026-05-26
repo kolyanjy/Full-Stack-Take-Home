@@ -1,68 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
-import { AlertTriangle, CheckCircle, Loader2, RefreshCw } from 'lucide-react';
-import { api } from '@/services/api';
+import { AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 import type { Site, SiteMetrics } from '@/types/emissions';
 
 interface Props {
   site: Site;
-  refreshTrigger: number;
+  metrics: SiteMetrics | undefined;
 }
 
-export function SiteMetricsCard({ site, refreshTrigger }: Props) {
-  const [metrics, setMetrics] = useState<SiteMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const initialLoad = useRef(true);
-
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      if (initialLoad.current) setLoading(true);
-      const result = await api.getSiteMetrics(site.id);
-      if (result.success) {
-        setMetrics(prev =>
-          JSON.stringify(prev) === JSON.stringify(result.data) ? prev : result.data,
-        );
-        setError(null);
-        initialLoad.current = false;
-      } else {
-        setError(result.error.message);
-      }
-      setLoading(false);
-    };
-    fetchMetrics();
-  }, [site.id, refreshTrigger]);
-
-  const refetch = async () => {
-    setLoading(true);
-    setError(null);
-    const result = await api.getSiteMetrics(site.id);
-    if (result.success) {
-      setMetrics(result.data);
-    } else {
-      setError(result.error.message);
-    }
-    setLoading(false);
-  };
-
-  if (loading) {
+export function SiteMetricsCard({ site, metrics }: Props) {
+  if (!metrics) {
     return (
       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center justify-center min-h-[220px]">
         <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
-      </div>
-    );
-  }
-
-  if (error || !metrics) {
-    return (
-      <div className="bg-white p-6 rounded-xl border border-red-200 shadow-sm">
-        <p className="text-sm text-red-600 mb-3">{error ?? 'Failed to load metrics'}</p>
-        <button
-          onClick={refetch}
-          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Retry
-        </button>
       </div>
     );
   }
