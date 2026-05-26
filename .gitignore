@@ -1,5 +1,8 @@
 .claude
 .DS_Store
+.env.local
+frontend/.env.local
+backend/.env.local
 
 # Terraform
 terraform/*.tfvars

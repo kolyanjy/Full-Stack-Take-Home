@@ -23,6 +23,12 @@ resource "aws_lb_target_group" "backend" {
     matcher             = "200"
   }
 
+  stickiness {
+    type            = "lb_cookie"
+    cookie_duration = 86400
+    enabled         = true
+  }
+
   tags = { Name = "${var.app_name}-backend-tg" }
 }
 
@@ -52,6 +58,22 @@ resource "aws_lb_listener" "http" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.frontend.arn
+  }
+}
+
+resource "aws_lb_listener_rule" "websocket" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 5
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/socket.io", "/socket.io/*"]
+    }
   }
 }
 

@@ -1,13 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
+import { MetricsGateway } from '../metrics/metrics.gateway';
 
 @Injectable()
 export class OutboxProcessor {
   private readonly logger = new Logger(OutboxProcessor.name);
   private readonly BATCH_SIZE = 50;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly metricsGateway: MetricsGateway,
+  ) {}
 
   @Cron(CronExpression.EVERY_5_SECONDS)
   async processOutbox() {
@@ -44,11 +48,14 @@ export class OutboxProcessor {
       `[AlertingService] Event dispatched: type=${eventType} payload=${JSON.stringify(payload)}`,
     );
 
-    if (eventType === 'EMISSIONS_INGESTED' && payload.limit_exceeded) {
-      this.logger.warn(
-        `[AlertingService] ALERT: Site ${payload.site_id} has exceeded its emission limit! ` +
-          `total=${payload.new_total} limit=${payload.emission_limit}`,
-      );
+    if (eventType === 'EMISSIONS_INGESTED') {
+      if (payload.limit_exceeded) {
+        this.logger.warn(
+          `[AlertingService] ALERT: Site ${payload.site_id} has exceeded its emission limit! ` +
+            `total=${payload.new_total} limit=${payload.emission_limit}`,
+        );
+      }
+      await this.metricsGateway.emitMetricsUpdate(payload.site_id as string);
     }
   }
 }
