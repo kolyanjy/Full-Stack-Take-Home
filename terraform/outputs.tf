@@ -18,3 +18,9 @@ output "rds_endpoint" {
   value       = aws_db_instance.postgres.endpoint
   sensitive   = true
 }
+
+output "msk_bootstrap_brokers" {
+  description = "MSK Kafka bootstrap broker endpoints (PLAINTEXT)"
+  value       = aws_msk_cluster.main.bootstrap_brokers
+  sensitive   = true
+}

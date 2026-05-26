@@ -14,7 +14,7 @@ export class EventBusProducerService implements OnModuleInit {
   }
 
   async publishReading(payload: ReadingMessage): Promise<void> {
-    await lastValueFrom(this.client.emit('emissions.readings', payload));
+    await lastValueFrom(this.client.emit('emissions.readings', { key: payload.site_id, value: payload }));
     this.logger.debug(`Published reading for batch ${payload.batch_id}, site ${payload.site_id}`);
   }
 }
