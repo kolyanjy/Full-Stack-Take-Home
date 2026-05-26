@@ -31,15 +31,16 @@ export class MetricsService {
       select: { timestamp: true },
     });
 
-    const utilization = (site.total_emissions_to_date / site.emission_limit) * 100;
+    const emissionLimit = site.emission_limit.toNumber();
+    const totalEmissions = site.total_emissions_to_date.toNumber();
+    const utilization = (totalEmissions / emissionLimit) * 100;
 
     const metrics: SiteMetrics = {
       site_id: site.id,
       site_name: site.name,
-      emission_limit: site.emission_limit,
-      total_emissions_to_date: site.total_emissions_to_date,
-      compliance_status:
-        site.total_emissions_to_date <= site.emission_limit ? 'WITHIN_LIMIT' : 'LIMIT_EXCEEDED',
+      emission_limit: emissionLimit,
+      total_emissions_to_date: totalEmissions,
+      compliance_status: totalEmissions <= emissionLimit ? 'WITHIN_LIMIT' : 'LIMIT_EXCEEDED',
       utilization_pct: Math.round(utilization * 100) / 100,
       measurement_count: site._count.measurements,
       last_reading_at: lastMeasurement?.timestamp ?? null,

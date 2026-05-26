@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { randomUUID } from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
@@ -10,7 +11,6 @@ async function main() {
 
   const sites = [
     {
-      id: '11111111-1111-1111-1111-111111111111',
       name: 'Permian Basin Well Pad A',
       location: 'Midland, TX',
       emission_limit: 5000,
@@ -18,7 +18,6 @@ async function main() {
       metadata: { operator: 'Highwood Energy', type: 'well_pad', sensors: 4 },
     },
     {
-      id: '22222222-2222-2222-2222-222222222222',
       name: 'Eagle Ford Compressor Station',
       location: 'San Antonio, TX',
       emission_limit: 8000,
@@ -26,7 +25,6 @@ async function main() {
       metadata: { operator: 'Highwood Energy', type: 'compressor', sensors: 6 },
     },
     {
-      id: '33333333-3333-3333-3333-333333333333',
       name: 'Marcellus Shale Gathering Facility',
       location: 'Pittsburgh, PA',
       emission_limit: 3000,
@@ -36,10 +34,11 @@ async function main() {
   ];
 
   for (const site of sites) {
-    await prisma.site.upsert({
-      where: { id: site.id },
-      update: {},
-      create: site,
+    await prisma.site.create({
+      data: {
+        id: randomUUID(),
+        ...site,
+      },
     });
     console.log(`  Site seeded: ${site.name}`);
   }

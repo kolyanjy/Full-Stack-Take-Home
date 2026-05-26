@@ -97,7 +97,8 @@ export class IngestBatchProcessor {
           new_total: updatedSite?.total_emissions_to_date,
           emission_limit: updatedSite?.emission_limit,
           limit_exceeded:
-            (updatedSite?.total_emissions_to_date ?? 0) > (updatedSite?.emission_limit ?? 0),
+            (updatedSite?.total_emissions_to_date?.toNumber() ?? 0) >
+            (updatedSite?.emission_limit?.toNumber() ?? 0),
         },
       },
     });
@@ -114,7 +115,7 @@ export class IngestBatchProcessor {
       batch_id: batch.id,
       site_id: batch.site_id,
       count: batch.count,
-      total_value: batch.total_value,
+      total_value: batch.total_value.toNumber(),
       duplicate,
       processed_at: batch.processed_at,
     };

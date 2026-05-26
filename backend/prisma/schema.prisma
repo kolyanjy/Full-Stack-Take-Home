@@ -10,8 +10,8 @@ model Site {
   id                      String   @id @default(uuid())
   name                    String
   location                String
-  emission_limit          Float
-  total_emissions_to_date Float    @default(0)
+  emission_limit          Decimal  @db.Decimal(18, 6)
+  total_emissions_to_date Decimal  @default(0) @db.Decimal(18, 6)
   metadata                Json?
   created_at              DateTime @default(now())
   updated_at              DateTime @updatedAt
@@ -25,7 +25,7 @@ model Site {
 model IngestBatch {
   id           String   @id
   site_id      String
-  total_value  Float
+  total_value  Decimal  @db.Decimal(18, 6)
   count        Int
   processed_at DateTime @default(now())
 
@@ -39,7 +39,7 @@ model Measurement {
   id         String   @id @default(uuid())
   site_id    String
   batch_id   String
-  value      Float
+  value      Decimal  @db.Decimal(18, 6)
   unit       String   @default("kg")
   sensor_id  String?
   timestamp  DateTime

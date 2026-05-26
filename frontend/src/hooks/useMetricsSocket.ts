@@ -8,8 +8,7 @@ export function useMetricsSocket(onUpdate: (metrics: SiteMetrics) => void): { co
   onUpdateRef.current = onUpdate;
 
   useEffect(() => {
-    const url = (import.meta.env.VITE_WS_URL as string | undefined) || undefined;
-    const socket = io(url, { transports: ['websocket'] });
+    const socket = io({ transports: ['websocket'] });
 
     socket.on('connect', () => setConnected(true));
     socket.on('disconnect', () => setConnected(false));
